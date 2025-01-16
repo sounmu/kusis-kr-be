@@ -1,0 +1,25 @@
+{
+  "editor.formatOnSave": false,
+
+  "[python]": {
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnType": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "never",
+      "source.fixAll.ruff": "never" 
+    }
+  },
+  "ruff.configuration": "../pyproject.toml",
+  "ruff.lineLength": 120,
+  "ruff.nativeServer": "on",
+  "ruff.lint.select": ["B", "C", "E", "F", "W", "I", "UP"],
+  "ruff.exclude": ["venv", ".git", "__pycache__", "__init__.py"],
+  "ruff.lint.ignore": [
+    "B008",
+    "E712",
+    "UP007",
+    "UP017"
+  ],
+  "editor.defaultFormatter": null
+}
