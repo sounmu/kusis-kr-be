@@ -4,9 +4,31 @@ from pydantic import BaseModel, Field
 
 
 class RouteReqPostContent(BaseModel):
-    title: str = Field(..., title="제목", description="제목을 입력해주세요")
-    contents: str = Field(..., title="내용", description="내용을 입력해주세요")
-    images: list[str] = Field([], title="이미지", description="이미지 URL을 입력해주세요")
-    created_at: datetime = Field(datetime.now(), title="작성일", description="작성일을 입력해주세요")
-    updated_at: datetime = Field(datetime.now(), title="수정일", description="수정일을 입력해주세요")
-    is_deleted: bool = Field(False, title="삭제 여부", description="삭제 여부를 입력해주세요")
+    title: str = Field(title="title", description="게시글 제목")
+    contents: str = Field(title="contents", description="게시글 내용")
+    images: list[str] = Field([], title="images", description="이미지 URL 모음")
+    created_at: datetime = Field(datetime.now(), title="created_at", description="게시글 작성일")
+    updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
+    is_deleted: bool = Field(False, title="is_deleted", description="삭제: True, 미삭제: False")
+
+
+class RouteResGetContent(BaseModel):
+    content_id: int = Field(title="content_id", description="게시글 ID")
+    title: str = Field(title="title", description="게시글 제목")
+    contents: str = Field(title="contents", description="게시글 내용")
+    images: list[str] = Field([], title="images", description="이미지 URL 모음")
+    created_at: datetime = Field(datetime.now(), title="created_at", description="게시글 작성일")
+    updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
+    is_deleted: bool = Field(False, title="is_deleted", description="삭제: True, 미삭제: False")
+
+
+class RouteResContentSummary(BaseModel):
+    content_id: int = Field(title="content_id", description="게시글 ID")
+    title: str = Field(title="title", description="게시글 제목")
+    first_image: str = Field(title="first_image", description="첫 번째 이미지 URL")
+
+
+class RouteResGetContentList(BaseModel):
+    data: list[RouteResContentSummary] = Field([], description="게시글 요약 정보 리스트")
+    count: int = Field(description="현재 페이지 게시글 수")
+    total: int = Field(description="전체 게시글 수")
