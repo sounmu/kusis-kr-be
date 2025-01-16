@@ -169,3 +169,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Firebase Auth
+kusis-kr-firebase-adminsdk.json
+
+# Mac OS
+.DS_Store
