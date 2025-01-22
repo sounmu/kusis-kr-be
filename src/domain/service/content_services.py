@@ -1,6 +1,6 @@
 from firebase_admin import firestore
 
-from domain.schema.content_schema import RouteResGetContent
+from src.domain.schema.content_schemas import RouteResGetContent
 
 
 async def service_get_content(

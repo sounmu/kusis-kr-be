@@ -16,7 +16,8 @@ async def get_current_user(token=Header(None)):
     )
     payload = jwt.decode(token, key=Settings().JWT_SECRET_KEY, algorithms=Settings().JWT_ALGORITHM)
     user_id: int = int(payload.get("sub"))
-    if user_id is None:
+
+    if not isinstance(user_id, int) or user_id <= 0:
         raise credentials_exception
 
     user_doc = db.collection("users").document(user_id).get()
