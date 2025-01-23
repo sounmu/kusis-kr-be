@@ -2,15 +2,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 
-from database import db
+from database import get_firestore_client
 from dependency import get_current_active_user
-from domain.schema.content_schema import RouteResGetContent, RouteResGetContentList
-from domain.service.content_service import service_get_content
+from domain.schema.content_schemas import RouteResGetContent, RouteResGetContentList
+from domain.service.content_services import service_get_content
 
 router = APIRouter(
     prefix="/content",
     tags=["content"]
 )
+
 
 @router.get(
     """
@@ -32,7 +33,7 @@ router = APIRouter(
 )
 async def get_content(
     content_id: Annotated[int, Path(description="게시글 ID", gt=0)],
-    db=Depends(db),
+    db = Depends(get_firestore_client),
 ) -> RouteResGetContent:
     response = service_get_content(
         content_id=content_id,
@@ -40,6 +41,7 @@ async def get_content(
     )
 
     return response
+
 
 @router.post(
     "/",

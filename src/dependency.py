@@ -5,7 +5,7 @@ from jose import jwt
 from jwt import PyJWTError
 
 from config import Settings
-from database import db
+from database import get_firestore_client
 from exception import InactiveUserException
 
 
@@ -22,7 +22,8 @@ async def get_current_user(token=Header(None)):
         if not isinstance(user_id, int) or user_id <= 0:
             raise credentials_exception
 
-        user_doc = db.collection("users").document(user_id).get()
+        db = get_firestore_client()
+        user_doc = await db.collection("users").document(user_id).get()
 
         if not user_doc.exists:
             raise credentials_exception
