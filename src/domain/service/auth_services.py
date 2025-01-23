@@ -1,10 +1,13 @@
+from datetime import datetime, timezone
+
 import aiohttp
 from fastapi import HTTPException, status
+from firebase_admin import auth
 from firebase_admin.exceptions import FirebaseError
 
 from config import settings
 from database import get_auth_client, get_firestore_client
-from domain.schema.auth_schemas import RouteResAdminLogin
+from domain.schema.auth_schemas import RouteResAdminLogin, RouteResUserRegister
 from domain.service.token_services import create_user_tokens
 
 
@@ -30,17 +33,13 @@ async def service_admin_login(
                 auth_data = await response.json()
                 user_id = auth_data["localId"]
 
-        # Admin SDK로 사용자 정보 확인
-        auth_client = get_auth_client()
-        user = await auth_client.get_user(user_id)
-
         # Firestore에서 관리자 권한 확인
         db = get_firestore_client()
-        admin_doc = await db.collection("users").document(user.uid).get()
+        admin_doc = db.collection("users").document(user_id).get()
 
         if not admin_doc.exists:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
 
@@ -52,7 +51,7 @@ async def service_admin_login(
             )
 
         # JWT 토큰 생성
-        access_token = await create_user_tokens(user.uid)
+        access_token = await create_user_tokens(user_id)
 
         return RouteResAdminLogin(
             access_token=access_token
@@ -62,4 +61,51 @@ async def service_admin_login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
+        ) from e
+
+
+async def service_user_register(
+    email: str,
+    password: str,
+    name: str
+) -> RouteResUserRegister:
+    try:
+        # Create user in Firebase Auth
+        auth_client = get_auth_client()
+        user = auth_client.create_user(
+            email=email,
+            password=password,
+            display_name=name
+        )
+
+        # Get Firestore client
+        db = get_firestore_client()
+
+        # Create user document in Firestore
+        now = datetime.now(timezone.utc)
+        user_data = {
+            "email": email,
+            "name": name,
+            "created_at": now,
+            "updated_at": now,
+            "is_admin": False
+        }
+
+        # Set document with user's UID as the document ID
+        db.collection("users").document(user.uid).set(user_data)
+
+        return RouteResUserRegister(
+            email=email,
+            name=name
+        )
+
+    except auth.EmailAlreadyExistsError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        ) from e
+    except FirebaseError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
         ) from e

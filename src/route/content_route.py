@@ -14,17 +14,6 @@ router = APIRouter(
 
 
 @router.get(
-    """
-    게시글 ID로 조회합니다.
-
-    Args:
-        content_id (int): 게시글 ID (양수)
-        db: 데이터베이스 종속성
-        current_user: 현재 활성 사용자 종속성
-
-    Returns:
-        RouteResGetContentList: 게시글 조회 결과
-    """
     "/{content_id}",
     summary="게시글 조회",
     description="""게시글을 ID로 조회합니다.""",
