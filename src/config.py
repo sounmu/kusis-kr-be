@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     PWD_CONTEXT: ClassVar[CryptContext] = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+    FIREBASE_WEB_API_KEY: str = os.getenv("FIREBASE_WEB_API_KEY", "")
     DB_HOST: str = os.getenv("EXP_DB_HOST", "localhost")
     DB_PORT: int = int(os.getenv("EXP_DB_PORT", 3306))
     DB_NAME: str = os.getenv("EXP_DB_NAME", "prod_db")
