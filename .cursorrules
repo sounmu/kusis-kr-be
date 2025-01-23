@@ -1,0 +1,70 @@
+You are an expert in **Python, FastAPI, scalable API development, TypeScript, React.
+
+### Key Principles
+- Write concise, technical responses with accurate examples in both Python and TypeScript.
+- Use **functional and declarative programming patterns**; avoid classes unless absolutely necessary.
+- Prefer **iteration and modularization** over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., `is_active`, `has_permission`, `isLoading`, `hasError`).
+- Follow proper **naming conventions**: 
+  - For Python: Use `snake_case` for both files and directories (e.g., `routers/user_routes.py`, `utils/response_handler.py`).
+
+### Project Structure
+- **Backend**:
+  - **Language**: Python@3.10
+  - **Framework**: FastAPI
+  - **Database**: Firebase
+  - **Directory Structure**: 
+    - `kusis-kr-be/src/`: Main source code
+    - `kusis-kr-be/tests/`: Tests
+    - `kusis-kr-be/document-processor/`: Document processing utilities
+    - `src/database.py`: Handles database API and connections using Firebase or SQLAlchemy.
+    - `src/config.py`: Reads `.env` files and defines configurations as a `class` for easy use.
+    - `src/dependency.py`: Collects reusable functions for `Depends()` in FastAPI, such as common dependencies.
+    - `src/exception.py`: Stores reusable custom exceptions that appear at least three times across the codebase.
+    - `src/domain/schema/`: Pydantic models for data validation.
+      - Example: For `auth` functionality, use `src/domain/schema/auth_schemas.py`.
+    - `src/domain/service/`: Business logic layer.
+      - Example: For `auth` functionality, use `src/domain/service/auth_services.py`.
+    - `src/route/`: API route definitions.
+      - Example: For `auth` functionality, use `src/route/auth_route.py`.
+    - `src/utils/crud_utils.py`: Common CRUD utilities for database interactions.
+    - `src/utils/shared_utils.py`: Shared utilities not specific to CRUD.
+
+  - Environment Configuration: 
+    - `.env` / `.env.example`: Use `.env` for local development and `.env.production` for production. Ensure sensitive keys are managed securely.
+  - **Docker Files**: 
+    - `Dockerfile` 
+    - `Dockerfile.dev`
+
+### Code Style and Structure
+- **Backend (Python/FastAPI)**:
+  - Use `def` for pure functions and `async def` for asynchronous operations.
+  - **Type Hints**: Use Python type hints for all function signatures. Prefer Pydantic models for input validation.
+  - **RORO Pattern**: Use the "Receive an Object, Return an Object" pattern.
+  - **Error Handling**:
+    - Validate inputs at the function's start using FastAPI's dependency injection or Pydantic validators.
+    - Use guard clauses to exit early when invalid states are encountered:
+      ```python
+      async def process_data(data: dict) -> dict:
+          if not data.get("required_field"):
+              raise ValueError("Missing required_field")
+          return {"success": True}
+      ```
+
+### Performance Optimization
+- **Asynchronous Operations**: Minimize blocking I/O operations using async functions.
+- **Caching**: Implement caching strategies for frequently accessed data using Redis or in-memory stores.
+- **Lazy Loading**: Use lazy loading techniques for large datasets and API responses.
+
+### Firebase Configuration
+- Centralize Firebase configuration in `database.py`.
+- Use async operations for Firebase interactions:
+  ```python
+  from firebase_admin import firestore_async
+
+  async def fetch_user_data(user_id: str) -> dict:
+      db = firestore_async.client()
+      user_doc = await db.collection("users").document(user_id).get()
+      if not user_doc.exists:
+          raise ValueError(f"User {user_id} not found.")
+      return user_doc.to_dict()
