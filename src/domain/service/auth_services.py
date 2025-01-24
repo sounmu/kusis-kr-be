@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 import aiohttp
 from fastapi import HTTPException, status
 from firebase_admin import auth
 from firebase_admin.exceptions import FirebaseError
+from zoneinfo import ZoneInfo
 
 from config import settings
 from database import get_auth_client, get_firestore_client
@@ -51,10 +52,11 @@ async def service_admin_login(
             )
 
         # JWT 토큰 생성
-        access_token = await create_user_tokens(user_id)
+        tokens = create_user_tokens(user_id)
 
         return RouteResAdminLogin(
-            access_token=access_token
+            access_token=tokens["access_token"],
+            refresh_token=tokens["refresh_token"],
         )
 
     except FirebaseError as e:
@@ -82,13 +84,15 @@ async def service_user_register(
         db = get_firestore_client()
 
         # Create user document in Firestore
-        now = datetime.now(timezone.utc)
+        now = datetime.now(ZoneInfo("Asia/Seoul"))
         user_data = {
             "email": email,
             "name": name,
             "created_at": now,
             "updated_at": now,
-            "is_admin": False
+            "is_admin": False,
+            "is_active": True,
+            "is_deleted": False
         }
 
         # Set document with user's UID as the document ID

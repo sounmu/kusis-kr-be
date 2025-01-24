@@ -33,12 +33,12 @@ def create_jwt(
     return encoded_jwt
 
 
-def create_user_tokens(user_id: int) -> dict:
+def create_user_tokens(user_id: str) -> dict:
     """
     Create JWT access and refresh tokens for the user.
 
     Args:
-        user_id (int): The user ID.
+        user_id (str): The user ID.
         secret_key (str): The secret key used to sign the tokens.
 
     Returns:
@@ -54,7 +54,7 @@ def create_user_tokens(user_id: int) -> dict:
     )
 
     # Create New Token
-    refresh_token_expires = timedelta(minutes=Settings().JWT_REFRESH_EXPIRATION_TIME_MINUTES)
+    refresh_token_expires = timedelta(days=Settings().JWT_REFRESH_EXPIRATION_TIME_DAYS)
     refresh_token = create_jwt(
         data={"sub": str(user_id)},
         secret_key=Settings().JWT_SECRET_KEY,
@@ -68,7 +68,7 @@ def create_user_tokens(user_id: int) -> dict:
     }
 
 
-def verify_jwt(token: str) -> int:
+def verify_jwt(token: str) -> str:
     try:
         payload = jwt.decode(token, key=Settings().JWT_SECRET_KEY, algorithms=Settings().JWT_ALGORITHM)
     except ExpiredSignatureError:
@@ -76,5 +76,5 @@ def verify_jwt(token: str) -> int:
     except JWTError:
         return -2
     else :
-        return int(payload.get("sub"))
+        return str(payload.get("sub"))
 
