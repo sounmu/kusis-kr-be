@@ -13,6 +13,7 @@ from domain.schema.auth_schemas import (
     RouteResUpdateUser,
 )
 from domain.service.auth_services import (
+    service_delete_user,
     service_get_user,
     service_login_admin,
     service_register_user,
@@ -94,7 +95,7 @@ async def update_admin(
     request: RouteReqUpdateUser,
     current_user: Annotated[dict, Depends(get_current_active_admin)],
     db = Depends(get_firestore_client),
-):
+) -> RouteResUpdateUser:
     result = await service_update_user(
         uid=uid,
         request=request,
@@ -102,3 +103,22 @@ async def update_admin(
     )
 
     return result
+
+
+@router.delete(
+    "/admin/{uid}",
+    summary="사용자 삭제",
+    description="""사용자 삭제""",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_admin(
+    uid: str,
+    current_user: Annotated[dict, Depends(get_current_active_admin)],
+    db = Depends(get_firestore_client),
+) -> None:
+    await service_delete_user(
+        uid=uid,
+        db=db
+    )
+
+    return

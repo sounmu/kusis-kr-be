@@ -18,7 +18,6 @@ from domain.schema.auth_schemas import (
     RouteResUpdateUser,
 )
 from domain.service.token_services import create_user_tokens
-from exception import NotFoundError
 
 
 async def service_login_admin(
@@ -168,7 +167,10 @@ async def service_update_user(
     user_doc = await user_ref.get()
 
     if not user_doc.exists:
-        raise NotFoundError(f"User with ID {uid} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
 
     update_data = {}
     if request.name is not None:
@@ -194,3 +196,21 @@ async def service_update_user(
         is_active=user_data["is_active"],
         is_deleted=user_data["is_deleted"]
     )
+
+
+async def service_delete_user(
+    uid: str,
+    db: Annotated[Client, Depends(get_firestore_client)],
+) -> None:
+    user_ref = db.collection("users").document(uid)
+    user_doc = user_ref.get()
+
+    if not user_doc.exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    user_ref.update({"is_deleted": True})
+
+    return
