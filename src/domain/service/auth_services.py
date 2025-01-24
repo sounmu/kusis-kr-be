@@ -1,18 +1,20 @@
 from datetime import datetime
+from typing import Annotated
 
 import aiohttp
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from firebase_admin import auth
 from firebase_admin.exceptions import FirebaseError
+from google.cloud.firestore_v1.client import Client
 from zoneinfo import ZoneInfo
 
 from config import settings
 from database import get_auth_client, get_firestore_client
-from domain.schema.auth_schemas import RouteResAdminLogin, RouteResUserRegister
+from domain.schema.auth_schemas import RouteResAdminLogin, RouteResGetUser, RouteResUserRegister
 from domain.service.token_services import create_user_tokens
 
 
-async def service_admin_login(
+async def service_login_admin(
     email: str,
     password: str
 ) -> RouteResAdminLogin:
@@ -66,7 +68,7 @@ async def service_admin_login(
         ) from e
 
 
-async def service_user_register(
+async def service_register_user(
     email: str,
     password: str,
     name: str
@@ -113,3 +115,25 @@ async def service_user_register(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         ) from e
+
+
+async def service_get_user(
+    uid: str,
+    db: Annotated[Client, Depends(get_firestore_client)],
+) -> RouteResGetUser:
+    user_doc = db.collection("users").document(uid).get()
+    if not user_doc.exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    user_data = user_doc.to_dict()
+    return RouteResGetUser(
+        email=user_data["email"],
+        name=user_data["name"],
+        created_at=user_data["created_at"],
+        updated_at=user_data["updated_at"],
+        is_admin=user_data["is_admin"],
+        is_active=user_data["is_active"],
+        is_deleted=user_data["is_deleted"]
+    )
