@@ -10,14 +10,21 @@ from zoneinfo import ZoneInfo
 
 from config import settings
 from database import get_auth_client, get_firestore_client
-from domain.schema.auth_schemas import RouteResAdminLogin, RouteResGetUser, RouteResUserRegister
+from domain.schema.auth_schemas import (
+    RouteReqUpdateUser,
+    RouteResGetUser,
+    RouteResLoginAdmin,
+    RouteResRegisterUser,
+    RouteResUpdateUser,
+)
 from domain.service.token_services import create_user_tokens
+from exception import NotFoundError
 
 
 async def service_login_admin(
     email: str,
     password: str
-) -> RouteResAdminLogin:
+) -> RouteResLoginAdmin:
     try:
         # Firebase Auth REST API를 통한 이메일/비밀번호 검증
         auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={settings.FIREBASE_WEB_API_KEY}"
@@ -56,7 +63,7 @@ async def service_login_admin(
         # JWT 토큰 생성
         tokens = create_user_tokens(user_id)
 
-        return RouteResAdminLogin(
+        return RouteResLoginAdmin(
             access_token=tokens["access_token"],
             refresh_token=tokens["refresh_token"],
         )
@@ -72,7 +79,7 @@ async def service_register_user(
     email: str,
     password: str,
     name: str
-) -> RouteResUserRegister:
+) -> RouteResRegisterUser:
     try:
         # Create user in Firebase Auth
         auth_client = get_auth_client()
@@ -100,7 +107,7 @@ async def service_register_user(
         # Set document with user's UID as the document ID
         db.collection("users").document(user.uid).set(user_data)
 
-        return RouteResUserRegister(
+        return RouteResRegisterUser(
             email=email,
             name=name
         )
@@ -129,6 +136,56 @@ async def service_get_user(
         )
     user_data = user_doc.to_dict()
     return RouteResGetUser(
+        email=user_data["email"],
+        name=user_data["name"],
+        created_at=user_data["created_at"],
+        updated_at=user_data["updated_at"],
+        is_admin=user_data["is_admin"],
+        is_active=user_data["is_active"],
+        is_deleted=user_data["is_deleted"]
+    )
+
+
+async def service_update_user(
+    uid: str,
+    request: RouteReqUpdateUser,
+    db: Annotated[Client, Depends(get_firestore_client)],
+) -> RouteResUpdateUser:
+    """
+    Update user information in Firestore.
+    Args:
+        uid: User ID to update
+        request: Update request containing fields to update
+        db: Firestore client
+
+    Returns:
+        Updated user information
+
+    Raises:
+        NotFoundError: If user does not exist
+    """
+    user_ref = db.collection("users").document(uid)
+    user_doc = await user_ref.get()
+
+    if not user_doc.exists:
+        raise NotFoundError(f"User with ID {uid} not found")
+
+    update_data = {}
+    if request.name is not None:
+        update_data["name"] = request.name
+    if request.is_admin is not None:
+        update_data["is_admin"] = request.is_admin
+    if request.is_active is not None:
+        update_data["is_active"] = request.is_active
+
+    update_data["updated_at"] = datetime.now()
+
+    await user_ref.update(update_data)
+
+    updated_doc = await user_ref.get()
+    user_data = updated_doc.to_dict()
+
+    return RouteResUpdateUser(
         email=user_data["email"],
         name=user_data["name"],
         created_at=user_data["created_at"],

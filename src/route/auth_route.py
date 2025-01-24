@@ -4,13 +4,20 @@ from fastapi import APIRouter, Depends, status
 
 from dependency import get_current_active_admin, get_firestore_client
 from domain.schema.auth_schemas import (
-    RouteReqAdminLogin,
-    RouteReqUserRegister,
-    RouteResAdminLogin,
+    RouteReqLoginAdmin,
+    RouteReqRegisterUser,
+    RouteReqUpdateUser,
     RouteResGetUser,
-    RouteResUserRegister,
+    RouteResLoginAdmin,
+    RouteResRegisterUser,
+    RouteResUpdateUser,
 )
-from domain.service.auth_services import service_get_user, service_login_admin, service_register_user
+from domain.service.auth_services import (
+    service_get_user,
+    service_login_admin,
+    service_register_user,
+    service_update_user,
+)
 
 router = APIRouter(
     prefix="/auth",
@@ -22,12 +29,12 @@ router = APIRouter(
     "/admin/login",
     summary="관리자 로그인",
     description="관리자 로그인",
-    response_model=RouteResAdminLogin,
+    response_model=RouteResLoginAdmin,
     status_code=status.HTTP_200_OK,
 )
 async def login_admin(
-    login_data: RouteReqAdminLogin
-) -> RouteResAdminLogin:
+    login_data: RouteReqLoginAdmin
+) -> RouteResLoginAdmin:
     result = await service_login_admin(
         email=login_data.email,
         password=login_data.password
@@ -40,11 +47,11 @@ async def login_admin(
     "/user/register",
     summary="사용자 회원가입",
     description="사용자 회원가입",
-    response_model=RouteResUserRegister,
+    response_model=RouteResRegisterUser,
     status_code=status.HTTP_200_OK,
 )
 async def register_user(
-    request: RouteReqUserRegister
+    request: RouteReqRegisterUser
 ):
     result = await service_register_user(
         email=request.email,
@@ -74,3 +81,24 @@ async def get_admin(
 
     return result
 
+
+@router.put(
+    "/admin/{uid}",
+    summary="사용자 정보 수정",
+    description="""사용자 정보 수정""",
+    response_model=RouteResUpdateUser,
+    status_code=status.HTTP_200_OK,
+)
+async def update_admin(
+    uid: str,
+    request: RouteReqUpdateUser,
+    current_user: Annotated[dict, Depends(get_current_active_admin)],
+    db = Depends(get_firestore_client),
+):
+    result = await service_update_user(
+        uid=uid,
+        request=request,
+        db=db
+    )
+
+    return result
