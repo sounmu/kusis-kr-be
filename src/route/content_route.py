@@ -95,12 +95,12 @@ async def create_content(
 )
 async def update_content(
     post_number: Annotated[int, Path(description="게시글 Post Number", gt=0)],
-    content: RouteReqPutContent,
+    request: RouteReqPutContent,
     db = Depends(get_firestore_client),
 ) -> RouteResGetContent:
     response = await service_update_content(
         post_number=post_number,
-        content=content,
+        request=request,
         db=db,
     )
     return response

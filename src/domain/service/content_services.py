@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
+from google.cloud.firestore_v1.base_query import BaseCompositeFilter, FieldFilter
 from google.cloud.firestore_v1.client import Client
 from zoneinfo import ZoneInfo
 
@@ -22,8 +23,14 @@ async def service_get_content(
     # Query for the document with matching post_number and not deleted
     contents_query = (
         db.collection("contents")
-        .where("post_number", "==", post_number)
-        .where("is_deleted", "==", False)
+        .where(
+            filter=BaseCompositeFilter(
+                "AND", [
+                    FieldFilter("post_number", "==", post_number),
+                    FieldFilter("is_deleted", "==", False)
+                ]
+            )
+        )
         .limit(1)
     )
     contents = contents_query.get()
@@ -59,14 +66,14 @@ async def service_get_content_list(
     offset = (page - 1) * limit
 
     # Get total count of non-deleted contents
-    total_query = db.collection("contents").where("is_deleted", "==", False)
+    total_query = db.collection("contents").where(filter=FieldFilter("is_deleted", "==", False))
     total_docs = total_query.get()
     total_count = len(list(total_docs))
 
     # Get paginated contents
     contents_query = (
         db.collection("contents")
-        .where("is_deleted", "==", False)
+        .where(filter=FieldFilter("is_deleted", "==", False))
         .order_by("post_number", direction="DESCENDING")
         .offset(offset)
         .limit(limit)
@@ -134,8 +141,14 @@ async def service_update_content(
     # Query for the document with matching post_number and not deleted
     contents_query = (
         db.collection("contents")
-        .where("post_number", "==", post_number)
-        .where("is_deleted", "==", False)
+        .where(
+            filter=BaseCompositeFilter(
+                "AND", [
+                    FieldFilter("post_number", "==", post_number),
+                    FieldFilter("is_deleted", "==", False)
+                ]
+            )
+        )
         .limit(1)
     )
     contents = contents_query.get()
@@ -147,13 +160,19 @@ async def service_update_content(
         )
 
     content_doc = contents[0]
-    content_data = request.model_dump()
-    content_data.update({
-        "updated_at": datetime.now(ZoneInfo("Asia/Seoul"))
-    })
+    # Exclude None values, empty strings, and empty lists from the update
+    content_data = {
+        key: value for key, value in request.model_dump().items()
+        if value is not None and value != "" and value != []
+    }
 
-    # Update using the correct document reference
-    db.collection("contents").document(content_doc.id).update(content_data)
+    # Only update if there are non-empty values
+    if content_data:
+        content_data.update({
+            "updated_at": datetime.now(ZoneInfo("Asia/Seoul"))
+        })
+        # Update using the correct document reference
+        db.collection("contents").document(content_doc.id).update(content_data)
 
     # Get the updated document
     updated_doc = db.collection("contents").document(content_doc.id).get()
@@ -170,8 +189,14 @@ async def service_delete_content(
     # Query for the document with matching post_number and not deleted
     contents_query = (
         db.collection("contents")
-        .where("post_number", "==", post_number)
-        .where("is_deleted", "==", False)
+        .where(
+            filter=BaseCompositeFilter(
+                "AND", [
+                    FieldFilter("post_number", "==", post_number),
+                    FieldFilter("is_deleted", "==", False)
+                ]
+            )
+        )
         .limit(1)
     )
     contents = contents_query.get()
