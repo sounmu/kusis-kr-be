@@ -1,13 +1,14 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from google.cloud.firestore_v1.client import Client
 from zoneinfo import ZoneInfo
 
 from database import get_firestore_client
 from domain.schema.content_schemas import (
     RouteReqPostContent,
+    RouteReqPutContent,
     RouteResContentSummary,
     RouteResGetContent,
     RouteResGetContentList,
@@ -18,12 +19,20 @@ async def service_get_content(
     post_number: int,
     db: Annotated[Client, Depends(get_firestore_client)],
 ) -> RouteResGetContent:
-    # Query for the document with matching post_number
-    contents_query = db.collection("contents").where("post_number", "==", post_number).limit(1)
+    # Query for the document with matching post_number and not deleted
+    contents_query = (
+        db.collection("contents")
+        .where("post_number", "==", post_number)
+        .where("is_deleted", "==", False)
+        .limit(1)
+    )
     contents = contents_query.get()
 
     if not contents or len(contents) == 0:
-        raise HTTPException(status_code=404, detail="Content not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
 
     content_doc = contents[0]
     content_data = content_doc.to_dict()
@@ -93,6 +102,7 @@ async def service_create_content(
     next_post_number = 1
     if latest_content and len(latest_content) > 0:
         next_post_number = latest_content[0].to_dict().get("post_number", 0) + 1
+        """재설계 필요"""
 
     # Get current timestamp in KST
     now = datetime.now(ZoneInfo("Asia/Seoul"))
@@ -114,3 +124,66 @@ async def service_create_content(
         content_id=doc_ref.id,
         **content_data
     )
+
+
+async def service_update_content(
+    post_number: int,
+    request: RouteReqPutContent,
+    db: Annotated[Client, Depends(get_firestore_client)],
+) -> RouteResGetContent:
+    # Query for the document with matching post_number and not deleted
+    contents_query = (
+        db.collection("contents")
+        .where("post_number", "==", post_number)
+        .where("is_deleted", "==", False)
+        .limit(1)
+    )
+    contents = contents_query.get()
+
+    if not contents or len(contents) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
+
+    content_doc = contents[0]
+    content_data = request.model_dump()
+    content_data.update({
+        "updated_at": datetime.now(ZoneInfo("Asia/Seoul"))
+    })
+
+    # Update using the correct document reference
+    db.collection("contents").document(content_doc.id).update(content_data)
+
+    # Get the updated document
+    updated_doc = db.collection("contents").document(content_doc.id).get()
+    return RouteResGetContent(
+        content_id=content_doc.id,
+        **updated_doc.to_dict()
+    )
+
+
+async def service_delete_content(
+    post_number: int,
+    db: Annotated[Client, Depends(get_firestore_client)],
+) -> None:
+    # Query for the document with matching post_number and not deleted
+    contents_query = (
+        db.collection("contents")
+        .where("post_number", "==", post_number)
+        .where("is_deleted", "==", False)
+        .limit(1)
+    )
+    contents = contents_query.get()
+
+    if not contents or len(contents) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
+
+    content_doc = contents[0]
+    # Update using the correct document reference
+    db.collection("contents").document(content_doc.id).update({"is_deleted": True})
+
+    return

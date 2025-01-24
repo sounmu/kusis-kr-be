@@ -40,3 +40,9 @@ class RouteResGetContentList(BaseModel):
     data: list[RouteResContentSummary] = Field([], description="게시글 요약 정보 리스트")
     count: int = Field(description="현재 페이지 게시글 수")
     total: int = Field(description="전체 게시글 수")
+
+
+class RouteReqPutContent(BaseModel):
+    title: str | None = Field(title="title", description="게시글 제목")
+    contents: str | None = Field(title="contents", description="게시글 내용")
+    images: list[str] | None = Field([], title="images", description="이미지 URL 모음")
