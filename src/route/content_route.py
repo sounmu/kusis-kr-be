@@ -14,18 +14,18 @@ router = APIRouter(
 
 
 @router.get(
-    "/{content_id}",
+    "/{post_number}",
     summary="게시글 조회",
-    description="""게시글을 ID로 조회합니다.""",
+    description="""게시글을 Post Number로 조회합니다.""",
     response_model=RouteResGetContent,
     status_code=status.HTTP_200_OK,
 )
 async def get_content(
-    content_id: Annotated[int, Path(description="게시글 ID", gt=0)],
+    post_number: Annotated[int, Path(description="게시글 Post Number", gt=0)],
     db = Depends(get_firestore_client),
 ) -> RouteResGetContent:
-    response = service_get_content(
-        content_id=content_id,
+    response = await service_get_content(
+        post_number=post_number,
         db=db,
     )
 
@@ -33,7 +33,7 @@ async def get_content(
 
 
 @router.post(
-    "/",
+    "/admin/create",
     summary="게시글 작성",
     status_code=status.HTTP_200_OK,
 )

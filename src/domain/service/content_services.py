@@ -8,17 +8,17 @@ from domain.schema.content_schemas import RouteResGetContent
 
 
 async def service_get_content(
-    content_id: int,
+    post_number: int,
     db: Annotated[Client, Depends(get_firestore_client)],
 ) -> RouteResGetContent:
-    content_doc = db.collection("contents").document(content_id).get()
+    content_doc = db.collection("contents").document(post_number).get()
     content_data = content_doc.to_dict()
 
     if not content_data:
         raise HTTPException(status_code=404, detail="Content not found")
 
     response = RouteResGetContent(
-        content_id=content_id,
+        post_number=post_number,
         title=content_data["title"],
         contents=content_data["contents"],
         images=content_data["images"],
