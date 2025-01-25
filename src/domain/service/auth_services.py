@@ -42,9 +42,9 @@ async def service_login_admin(
                 auth_data = await response.json()
                 user_id = auth_data["localId"]
 
-        # Firestore에서 관리자 권한 확인
+        # Firestore 비동기 조회로 수정
         db = get_async_firestore_client()
-        admin_doc = db.collection("users").document(user_id).get()
+        admin_doc = await db.collection("users").document(user_id).get()
 
         if not admin_doc.exists:
             raise HTTPException(
@@ -77,7 +77,8 @@ async def service_login_admin(
 async def service_register_user(
     email: str,
     password: str,
-    name: str
+    name: str,
+    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
 ) -> RouteResRegisterUser:
     try:
         # Create user in Firebase Auth
@@ -87,9 +88,6 @@ async def service_register_user(
             password=password,
             display_name=name
         )
-
-        # Get Firestore client
-        db = get_async_firestore_client()
 
         # Create user document in Firestore
         now = datetime.now(ZoneInfo("Asia/Seoul"))
@@ -103,8 +101,8 @@ async def service_register_user(
             "is_deleted": False
         }
 
-        # Set document with user's UID as the document ID
-        db.collection("users").document(user.uid).set(user_data)
+        # Firestore 비동기 작업으로 수정
+        await db.collection("users").document(user.uid).set(user_data)
 
         return RouteResRegisterUser(
             email=email,
@@ -211,6 +209,7 @@ async def service_delete_user(
             detail="User not found"
         )
 
-    user_ref.update({"is_deleted": True})
+    # Firestore 비동기 업데이트로 수정
+    await user_ref.update({"is_deleted": True})
 
     return

@@ -52,12 +52,14 @@ async def login_admin(
     status_code=status.HTTP_200_OK,
 )
 async def register_user(
-    request: RouteReqRegisterUser
+    request: RouteReqRegisterUser,
+    db = Depends(get_async_firestore_client),
 ):
     result = await service_register_user(
         email=request.email,
         password=request.password,
-        name=request.name
+        name=request.name,
+        db=db,
     )
 
     return result
