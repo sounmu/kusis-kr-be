@@ -40,7 +40,6 @@ async def get_content(
         post_number=post_number,
         db=db,
     )
-
     return response
 
 
@@ -142,5 +141,4 @@ async def get_content_detail(
         post_number=post_number,
         db=db,
     )
-
     return response

@@ -40,7 +40,6 @@ async def login_admin(
         email=login_data.email,
         password=login_data.password
     )
-
     return result
 
 
@@ -61,7 +60,6 @@ async def register_user(
         name=request.name,
         db=db,
     )
-
     return result
 
 
@@ -81,7 +79,6 @@ async def get_admin(
         uid=uid,
         db=db
     )
-
     return result
 
 
@@ -103,7 +100,6 @@ async def update_admin(
         request=request,
         db=db
     )
-
     return result
 
 
@@ -122,5 +118,4 @@ async def delete_admin(
         uid=uid,
         db=db
     )
-
     return
