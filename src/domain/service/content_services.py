@@ -12,6 +12,7 @@ from domain.schema.content_schemas import (
     RouteReqPutContent,
     RouteResContentSummary,
     RouteResGetContent,
+    RouteResGetContentDetail,
     RouteResGetContentList,
 )
 
@@ -50,9 +51,7 @@ async def service_get_content(
         title=content_data["title"],
         contents=content_data["contents"],
         images=content_data["images"],
-        created_at=content_data["created_at"],
         updated_at=content_data["updated_at"],
-        is_deleted=content_data["is_deleted"],
     )
     return response
 
@@ -212,3 +211,44 @@ async def service_delete_content(
     db.collection("contents").document(content_doc.id).update({"is_deleted": True})
 
     return
+
+
+async def service_get_content_detail(
+    post_number: int,
+    db: Annotated[Client, Depends(get_firestore_client)],
+) -> RouteResGetContentDetail:
+    # Query for the document with matching post_number and not deleted
+    contents_query = (
+        db.collection("contents")
+        .where(
+            filter=BaseCompositeFilter(
+                "AND", [
+                    FieldFilter("post_number", "==", post_number),
+                    FieldFilter("is_deleted", "==", False)
+                ]
+            )
+        )
+        .limit(1)
+    )
+    contents = contents_query.get()
+
+    if not contents or len(contents) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Content not found"
+        )
+
+    content_doc = contents[0]
+    content_data = content_doc.to_dict()
+
+    response = RouteResGetContentDetail(
+        content_id=content_doc.id,
+        post_number=content_data["post_number"],
+        title=content_data["title"],
+        contents=content_data["contents"],
+        images=content_data["images"],
+        created_at=content_data["created_at"],
+        updated_at=content_data["updated_at"],
+        is_deleted=content_data["is_deleted"],
+    )
+    return response

@@ -25,6 +25,15 @@ class RouteResGetContent(BaseModel):
     title: str = Field(title="title", description="게시글 제목")
     contents: str = Field(title="contents", description="게시글 내용")
     images: list[str] = Field([], title="images", description="이미지 URL 모음")
+    updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
+
+
+class RouteResGetContentDetail(BaseModel):
+    content_id: str = Field(title="content_id", description="게시글 ID")
+    post_number: int = Field(title="post_number", description="게시글 Post Number")
+    title: str = Field(title="title", description="게시글 제목")
+    contents: str = Field(title="contents", description="게시글 내용")
+    images: list[str] = Field([], title="images", description="이미지 URL 모음")
     created_at: datetime = Field(datetime.now(), title="created_at", description="게시글 작성일")
     updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
     is_deleted: bool = Field(False, title="is_deleted", description="삭제: True, 미삭제: False")

@@ -8,12 +8,14 @@ from domain.schema.content_schemas import (
     RouteReqPostContent,
     RouteReqPutContent,
     RouteResGetContent,
+    RouteResGetContentDetail,
     RouteResGetContentList,
 )
 from domain.service.content_services import (
     service_create_content,
     service_delete_content,
     service_get_content,
+    service_get_content_detail,
     service_get_content_list,
     service_update_content,
 )
@@ -123,3 +125,23 @@ async def delete_content(
         db=db,
     )
     return
+
+
+@router.get(
+    "/admin/{post_number}",
+    summary="게시글 상세 조회",
+    description="""게시글을 Post Number로 상세 조회합니다.""",
+    response_model=RouteResGetContentDetail,
+    status_code=status.HTTP_200_OK,
+)
+async def get_content_detail(
+    post_number: Annotated[int, Path(description="게시글 Post Number", gt=0)],
+    current_user: Annotated[dict, Depends(get_current_active_admin)],
+    db = Depends(get_firestore_client),
+) -> RouteResGetContentDetail:
+    response = await service_get_content_detail(
+        post_number=post_number,
+        db=db,
+    )
+
+    return response
