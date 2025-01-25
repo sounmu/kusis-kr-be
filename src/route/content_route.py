@@ -76,7 +76,7 @@ async def get_content_list(
 )
 async def create_content(
     content: RouteReqPostContent,
-    current_user: Annotated[dict, Depends(get_current_active_admin)], # admin으로 변경하기.
+    current_user: Annotated[dict, Depends(get_current_active_admin)],
     db = Depends(get_firestore_client),
 ) -> RouteResGetContent:
     response = await service_create_content(
@@ -96,6 +96,7 @@ async def create_content(
 async def update_content(
     post_number: Annotated[int, Path(description="게시글 Post Number", gt=0)],
     request: RouteReqPutContent,
+    current_user: Annotated[dict, Depends(get_current_active_admin)],
     db = Depends(get_firestore_client),
 ) -> RouteResGetContent:
     response = await service_update_content(
@@ -114,6 +115,7 @@ async def update_content(
 )
 async def delete_content(
     post_number: Annotated[int, Path(description="게시글 Post Number", gt=0)],
+    current_user: Annotated[dict, Depends(get_current_active_admin)],
     db = Depends(get_firestore_client),
 ) -> None:
     await service_delete_content(
