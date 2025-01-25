@@ -1,12 +1,29 @@
+import os
+
 import firebase_admin
-from firebase_admin import auth, credentials, firestore
+from firebase_admin import auth, credentials
+from google.cloud import firestore
+from google.oauth2 import service_account
 
-cred = credentials.Certificate("kusis-kr-firebase-adminsdk.json")
-firebase_admin.initialize_app(cred)
+
+def initialize_firebase_admin():
+    if not firebase_admin._apps:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        key_path = os.path.join(current_dir, "kusis-kr-firebase-adminsdk.json")
+
+        if not os.path.exists(key_path):
+            raise FileNotFoundError(f"서비스 계정 키 파일을 찾을 수 없습니다: {key_path}")
+
+        cred = credentials.Certificate(key_path)
+        firebase_admin.initialize_app(cred)
 
 
-def get_firestore_client():
-    return firestore.client()
+def get_async_firestore_client() -> firestore.AsyncClient:
+    initialize_firebase_admin()
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    key_path = os.path.join(current_dir, "kusis-kr-firebase-adminsdk.json")
+    creds = service_account.Credentials.from_service_account_file(key_path)
+    return firestore.AsyncClient(credentials=creds)
 
 
 def get_auth_client():

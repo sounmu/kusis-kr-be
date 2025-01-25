@@ -1,18 +1,18 @@
 from typing import Any, Dict
 
 from fastapi import Depends, Header, HTTPException, status
-from google.cloud.firestore_v1.client import Client
+from google.cloud.firestore_v1.async_client import AsyncClient
 from jose import jwt
 from jwt import PyJWTError
 
 from config import Settings
-from database import get_firestore_client
+from database import get_async_firestore_client
 from exception import InactiveUserException
 
 
 async def get_current_admin(
     token: str = Header(None),
-    db: Client = Depends(get_firestore_client)
+    db: AsyncClient = Depends(get_async_firestore_client)
 ):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
