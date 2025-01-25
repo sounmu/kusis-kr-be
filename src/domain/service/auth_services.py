@@ -5,11 +5,11 @@ import aiohttp
 from fastapi import Depends, HTTPException, status
 from firebase_admin import auth
 from firebase_admin.exceptions import FirebaseError
-from google.cloud.firestore_v1.client import Client
+from google.cloud.firestore_v1.async_client import AsyncClient
 from zoneinfo import ZoneInfo
 
 from config import settings
-from database import get_auth_client, get_firestore_client
+from database import get_async_firestore_client, get_auth_client
 from domain.schema.auth_schemas import (
     RouteReqUpdateUser,
     RouteResGetUser,
@@ -43,7 +43,7 @@ async def service_login_admin(
                 user_id = auth_data["localId"]
 
         # Firestore에서 관리자 권한 확인
-        db = get_firestore_client()
+        db = get_async_firestore_client()
         admin_doc = db.collection("users").document(user_id).get()
 
         if not admin_doc.exists:
@@ -89,7 +89,7 @@ async def service_register_user(
         )
 
         # Get Firestore client
-        db = get_firestore_client()
+        db = get_async_firestore_client()
 
         # Create user document in Firestore
         now = datetime.now(ZoneInfo("Asia/Seoul"))
@@ -125,9 +125,9 @@ async def service_register_user(
 
 async def service_get_user(
     uid: str,
-    db: Annotated[Client, Depends(get_firestore_client)],
+    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
 ) -> RouteResGetUser:
-    user_doc = db.collection("users").document(uid).get()
+    user_doc = await db.collection("users").document(uid).get()
     if not user_doc.exists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -148,7 +148,7 @@ async def service_get_user(
 async def service_update_user(
     uid: str,
     request: RouteReqUpdateUser,
-    db: Annotated[Client, Depends(get_firestore_client)],
+    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
 ) -> RouteResUpdateUser:
     """
     Update user information in Firestore.
@@ -200,10 +200,10 @@ async def service_update_user(
 
 async def service_delete_user(
     uid: str,
-    db: Annotated[Client, Depends(get_firestore_client)],
+    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
 ) -> None:
     user_ref = db.collection("users").document(uid)
-    user_doc = user_ref.get()
+    user_doc = await user_ref.get()
 
     if not user_doc.exists:
         raise HTTPException(

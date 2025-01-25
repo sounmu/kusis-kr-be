@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from dependency import get_current_active_admin, get_firestore_client
+from dependency import get_async_firestore_client, get_current_active_admin
 from domain.schema.auth_schemas import (
     RouteReqLoginAdmin,
     RouteReqRegisterUser,
@@ -73,7 +73,7 @@ async def register_user(
 async def get_admin(
     uid: str,
     current_user: Annotated[dict, Depends(get_current_active_admin)],
-    db = Depends(get_firestore_client),
+    db = Depends(get_async_firestore_client),
 ):
     result = await service_get_user(
         uid=uid,
@@ -94,7 +94,7 @@ async def update_admin(
     uid: str,
     request: RouteReqUpdateUser,
     current_user: Annotated[dict, Depends(get_current_active_admin)],
-    db = Depends(get_firestore_client),
+    db = Depends(get_async_firestore_client),
 ) -> RouteResUpdateUser:
     result = await service_update_user(
         uid=uid,
@@ -114,7 +114,7 @@ async def update_admin(
 async def delete_admin(
     uid: str,
     current_user: Annotated[dict, Depends(get_current_active_admin)],
-    db = Depends(get_firestore_client),
+    db = Depends(get_async_firestore_client),
 ) -> None:
     await service_delete_user(
         uid=uid,
