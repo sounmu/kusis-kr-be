@@ -57,11 +57,15 @@ async def get_content_list(
     limit: Annotated[
         int, Query(description="페이지 당 게시글 수", example=10,gt=0)
     ] = 10,
+    category: Annotated[
+        str | None, Query(regex="^(apply|notice|cardnews)$")
+    ] = None,
     db = Depends(get_async_firestore_client),
 ) -> RouteResGetContentList:
     response = await service_get_content_list(
         page=page,
         limit=limit,
+        category=category,
         db=db,
     )
     return response

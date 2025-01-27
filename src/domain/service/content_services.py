@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
+from google.cloud.firestore_v1.async_aggregation import AsyncAggregationQuery
 from google.cloud.firestore_v1.async_client import AsyncClient
 from google.cloud.firestore_v1.base_query import And, FieldFilter
 from zoneinfo import ZoneInfo
@@ -37,6 +38,7 @@ async def service_get_content(
         contents=content_data["contents"],
         images=content_data["images"],
         updated_at=content_data["updated_at"],
+        category=content_data["category"],
     )
     return response
 
@@ -44,41 +46,44 @@ async def service_get_content(
 async def service_get_content_list(
     page: int,
     limit: int,
+    category: str | None,
     db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
 ) -> RouteResGetContentList:
     # Calculate offset for pagination
     offset = (page - 1) * limit
 
-    # Get total count of non-deleted contents
-    total_query = db.collection("contents").where(filter=FieldFilter("is_deleted", "==", False))
-    total_docs = await total_query.get()
-    total_count = len(total_docs)
+    filters = [FieldFilter("is_deleted", "==", False)]
+    if category:
+        filters.append(FieldFilter("category", "==", category))
+
+    total_query = db.collection("contents").where(filter=And(filters))
+    aggregate_query = AsyncAggregationQuery(total_query)
+    aggregate_query.count(alias="total")
+    results = await aggregate_query.get()
+
+    total_count = results[0][0].value
 
     # Get paginated contents using And filter
     contents_query = (
         db.collection("contents")
-        .where(
-            filter=And([
-                FieldFilter("is_deleted", "==", False)
-            ])
-        )
+        .where(filter=And(filters))
         .order_by("post_number", direction="DESCENDING")
         .offset(offset)
         .limit(limit)
     )
     contents = await contents_query.get()
 
-    content_list = []
-    for content in contents:
-        content_data = content.to_dict()
-        content_list.append(
-            RouteResContentSummary(
-                content_id=content.id,
-                post_number=content_data["post_number"],
-                title=content_data["title"],
-                first_image=content_data["images"][0] if content_data["images"] else ""
-            )
+    content_list = [
+        RouteResContentSummary(
+            content_id=content.id,
+            post_number=content_data["post_number"],
+            title=content_data["title"],
+            first_image=content_data["images"][0] if content_data["images"] else "",
+            category=content_data["category"],
         )
+        for content in contents
+        if (content_data := content.to_dict())
+    ]
 
     response = RouteResGetContentList(
         data=content_list,
@@ -100,7 +105,8 @@ async def service_create_content(
     content_data.update({
         "created_at": now,
         "updated_at": now,
-        "is_deleted": False
+        "is_deleted": False,
+        "category": content.category,
     })
 
     # Create document with auto-increment ID
@@ -148,14 +154,15 @@ async def service_update_content(
     content_doc = contents[0]
     # Exclude None values, empty strings, and empty lists from the update
     content_data = {
-        key: value for key, value in request.model_dump().items()
+        key: value for key, value in request.model_dump(exclude_unset=True).items()
         if value is not None and value != "" and value != []
     }
 
     # Only update if there are non-empty values
     if content_data:
         content_data.update({
-            "updated_at": datetime.now(ZoneInfo("Asia/Seoul"))
+            "updated_at": datetime.now(ZoneInfo("Asia/Seoul")),
+            "category": request.category,
         })
         # Update using the correct document reference with await
         await db.collection("contents").document(content_doc.id).update(content_data)
@@ -235,5 +242,6 @@ async def service_get_content_detail(
         created_at=content_data["created_at"],
         updated_at=content_data["updated_at"],
         is_deleted=content_data["is_deleted"],
+        category=content_data["category"],
     )
     return response
