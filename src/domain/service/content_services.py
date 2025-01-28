@@ -75,7 +75,6 @@ async def service_get_content_list(
 
     content_list = [
         RouteResContentSummary(
-            content_id=content.id,
             post_number=content_data["post_number"],
             title=content_data["title"],
             first_image=content_data["images"][0] if content_data["images"] else "",

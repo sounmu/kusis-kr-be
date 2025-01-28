@@ -52,10 +52,10 @@ async def get_content(
 )
 async def get_content_list(
     page: Annotated[
-        int, Query(description="페이지 번호", example=1,gt=0)
+        int, Query(description="페이지 번호", example=1, gt=0)
     ] = 1,
     limit: Annotated[
-        int, Query(description="페이지 당 게시글 수", example=10,gt=0)
+        int, Query(description="페이지 당 게시글 수", example=10, gt=0)
     ] = 10,
     category: Annotated[
         str | None, Query(regex="^(apply|notice|cardnews)$")
