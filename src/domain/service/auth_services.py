@@ -22,7 +22,8 @@ from domain.service.token_services import create_user_tokens
 
 async def service_login_admin(
     email: str,
-    password: str
+    password: str,
+    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
 ) -> RouteResLoginAdmin:
     try:
         # Firebase Auth REST API를 통한 이메일/비밀번호 검증
@@ -42,8 +43,6 @@ async def service_login_admin(
                 auth_data = await response.json()
                 user_id = auth_data["localId"]
 
-        # Firestore 비동기 조회로 수정
-        db = get_async_firestore_client()
         admin_doc = await db.collection("users").document(user_id).get()
 
         if not admin_doc.exists:

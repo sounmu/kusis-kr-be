@@ -34,11 +34,13 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
 )
 async def login_admin(
-    login_data: RouteReqLoginAdmin
+    login_data: RouteReqLoginAdmin,
+    db = Depends(get_async_firestore_client),
 ) -> RouteResLoginAdmin:
     result = await service_login_admin(
         email=login_data.email,
-        password=login_data.password
+        password=login_data.password,
+        db=db,
     )
     return result
 
