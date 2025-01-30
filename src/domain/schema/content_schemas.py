@@ -62,7 +62,7 @@ class RouteResGetContentList(BaseModel):
 
 
 class RouteReqPutContent(BaseModel):
-    category: ContentCategory | None = Field(None, description="Content category")
-    title: str | None = Field(title="title", description="게시글 제목")
-    contents: str | None = Field(title="contents", description="게시글 내용")
-    images: list[bytes] | None = Field(title="images", description="이미지 모음")
+    category: str | None = Field(description="Content category")
+    title: str | None = Field(None, title="title", description="게시글 제목")
+    contents: str | None = Field(None, title="contents", description="게시글 내용")
+    images: list[str] | None = Field(None, title="images", description="이미지 URL 모음")

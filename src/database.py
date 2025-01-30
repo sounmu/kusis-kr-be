@@ -32,5 +32,12 @@ def get_auth_client():
 
 async def get_storage() -> storage.Client:
     """Get Google Cloud Storage client."""
-    initialize_firebase_admin()
-    return storage.Client(firebase_admin.get_app())
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    key_path = os.path.join(current_dir, "kusis-kr-firebase-adminsdk.json")
+    creds = service_account.Credentials.from_service_account_file(key_path)
+
+    # service account key에서 project_id를 가져와서 사용
+    return storage.Client(
+        credentials=creds,
+        project=creds.project_id
+    )

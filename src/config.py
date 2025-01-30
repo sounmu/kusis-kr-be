@@ -32,10 +32,11 @@ class Settings(BaseSettings):
     GCS_CDN_HOST: str = os.getenv("GCS_CDN_HOST", "exp-cdn.appspot.com")
     MAX_IMAGE_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_IMAGE_TYPES: set[str] = {
-        "image/jpeg",
+        "image/webp",
         "image/png",
+        "image/jpeg",
+        "image/jpg",
         "image/gif",
-        "image/webp"
     }
 
     @property

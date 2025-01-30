@@ -1,7 +1,9 @@
+from io import BytesIO
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, UploadFile, status
 from google.cloud import storage
+from PIL import Image
 
 from config import settings
 from database import get_storage
@@ -13,6 +15,9 @@ class ImageUploader:
         self.bucket = self.storage_client.bucket(settings.GCS_BUCKET_NAME)
         self.allowed_types = settings.ALLOWED_IMAGE_TYPES
         self.max_size = settings.MAX_IMAGE_SIZE
+        # 이미지 최적화 설정
+        self.max_dimension = 1200  # 최대 너비/높이
+        self.webp_quality = 50  # WebP 품질 (0-100)
 
     def validate_image(self, file: UploadFile) -> None:
         """이미지 파일의 크기와 타입을 검증합니다."""
@@ -54,6 +59,36 @@ class ImageUploader:
         # 안전한 파일명-타임스탬프-UUID.확장자 형식으로 반환
         return f"{safe_basename}-{timestamp}-{uuid.uuid4().hex[:8]}.{ext}"
 
+    def optimize_image(self, image_data: bytes, content_type: str) -> tuple[bytes, str]:
+        """이미지를 최적화하고 WebP로 변환합니다."""
+        try:
+            # 이미지 열기
+            img = Image.open(BytesIO(image_data))
+
+            # RGBA 모드인 경우 RGB로 변환
+            if img.mode in ('RGBA', 'LA'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])
+                img = background
+
+            # 이미지 리사이징
+            if img.width > self.max_dimension or img.height > self.max_dimension:
+                ratio = min(self.max_dimension / img.width, self.max_dimension / img.height)
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+
+            # WebP로 변환
+            output = BytesIO()
+            img.save(output, format='WebP', quality=self.webp_quality, optimize=True)
+            optimized_data = output.getvalue()
+
+            return optimized_data, 'image/webp'
+
+        except Exception as e:
+            print(f"Image optimization error: {str(e)}")
+            # 최적화 실패 시 원본 반환
+            return image_data, content_type
+
     async def upload_images(self, files: list[UploadFile]) -> list[str]:
         """여러 이미지를 업로드하고 GCS URL 목록을 반환합니다."""
         gcs_urls = []
@@ -63,20 +98,24 @@ class ImageUploader:
                 # 이미지 유효성 검사
                 self.validate_image(file)
 
-                # 안전한 파일명 생성
-                safe_filename = self._generate_safe_filename(file.filename)
+                # 안전한 파일명 생성 (확장자를 webp로 변경)
+                original_filename = file.filename.rsplit('.', 1)[0]
+                safe_filename = self._generate_safe_filename(f"{original_filename}.webp")
                 blob = self.bucket.blob(f"images/{safe_filename}")
 
-                # 파일 내용 읽기 및 업로드
+                # 파일 내용 읽기 및 최적화
                 contents = await file.read()
-                blob.content_type = file.content_type
+                optimized_contents, content_type = self.optimize_image(contents, file.content_type)
+
+                # 최적화된 이미지 업로드
+                blob.content_type = content_type
                 blob.upload_from_string(
-                    contents,
-                    content_type=file.content_type
+                    optimized_contents,
+                    content_type=content_type
                 )
 
                 # GCS URL 생성
-                gcs_url = f"https://storage.googleapis.com/{settings.GCS_BUCKET_NAME}/images/{safe_filename}"
+                gcs_url = f"https://firebasestorage.googleapis.com/v0/b/{settings.GCS_BUCKET_NAME}/o/images%2F{safe_filename}?alt=media"
                 gcs_urls.append(gcs_url)
 
             except Exception as e:

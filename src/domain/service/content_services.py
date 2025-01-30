@@ -168,7 +168,6 @@ async def service_update_content(
     if content_data:
         content_data.update({
             "updated_at": datetime.now(ZoneInfo("Asia/Seoul")),
-            "category": request.category,
         })
         # Update using the correct document reference with await
         await db.collection("contents").document(content_doc.id).update(content_data)
