@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Annotated
 
-from fastapi import Depends, HTTPException, UploadFile, status
+from fastapi import HTTPException, UploadFile, status
 from google.cloud.firestore_v1.async_aggregation import AsyncAggregationQuery
 from google.cloud.firestore_v1.async_client import AsyncClient
 from google.cloud.firestore_v1.base_query import And, FieldFilter
 from zoneinfo import ZoneInfo
 
-from database import get_async_firestore_client
 from domain.schema.content_schemas import (
     RouteReqPostContent,
     RouteReqPutContent,
@@ -22,7 +20,7 @@ from utils.image_utils import ImageUploader
 
 async def service_get_content(
     post_number: int,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResGetContent:
     # Get document by increment ID (post_number)
     content_data = await FirestoreService(db).get_document_by_increment_id("contents", "post_number", post_number)
@@ -48,7 +46,7 @@ async def service_get_content_list(
     page: int,
     limit: int,
     category: str | None,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResGetContentList:
     # Calculate offset for pagination
     offset = (page - 1) * limit
@@ -138,7 +136,7 @@ async def service_create_content(
 async def service_update_content(
     post_number: int,
     request: RouteReqPutContent,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResGetContent:
     # Query for the document with matching post_number and not deleted
     contents_query = (
@@ -187,7 +185,7 @@ async def service_update_content(
 
 async def service_delete_content(
     post_number: int,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> None:
     # Query for the document with matching post_number and not deleted
     contents_query = (
@@ -217,7 +215,7 @@ async def service_delete_content(
 
 async def service_get_content_detail(
     post_number: int,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResGetContentDetail:
     # Query for the document with matching post_number and not deleted
     contents_query = (

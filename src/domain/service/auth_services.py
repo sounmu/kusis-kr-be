@@ -23,7 +23,7 @@ from domain.service.token_services import create_user_tokens
 async def service_login_admin(
     email: str,
     password: str,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResLoginAdmin:
     try:
         # Firebase Auth REST API를 통한 이메일/비밀번호 검증
@@ -77,7 +77,7 @@ async def service_register_user(
     email: str,
     password: str,
     name: str,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResRegisterUser:
     try:
         # Create user in Firebase Auth
@@ -122,7 +122,7 @@ async def service_register_user(
 
 async def service_get_user(
     uid: str,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResGetUser:
     user_doc = await db.collection("users").document(uid).get()
     if not user_doc.exists:
@@ -145,7 +145,7 @@ async def service_get_user(
 async def service_update_user(
     uid: str,
     request: RouteReqUpdateUser,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> RouteResUpdateUser:
     """
     Update user information in Firestore.
@@ -197,7 +197,7 @@ async def service_update_user(
 
 async def service_delete_user(
     uid: str,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    db: AsyncClient,
 ) -> None:
     user_ref = db.collection("users").document(uid)
     user_doc = await user_ref.get()

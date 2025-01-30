@@ -1,17 +1,13 @@
 # services/counter_service.py
 import asyncio
-from typing import Annotated
 
-from fastapi import Depends
 from google.api_core.exceptions import GoogleAPICallError, RetryError
 from google.cloud.firestore_v1.async_client import AsyncClient
-
-from database import get_async_firestore_client
 
 
 async def get_async_next_id(
     collection_name: str,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)]
+    db: AsyncClient,
 ) -> int | None:
     counter_ref = db.collection("counters").document(collection_name)
     max_retries = 5
