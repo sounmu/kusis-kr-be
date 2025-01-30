@@ -14,14 +14,13 @@ class RouteReqPostContent(BaseModel):
     category: ContentCategory = Field(description="Content category")
     title: str = Field(title="title", description="게시글 제목")
     contents: str = Field(title="contents", description="게시글 내용")
-    images: list[str] = Field([], title="images", description="이미지 URL 모음")
 
 
 class DomainReqPostContent(BaseModel):
     post_number: int = Field(title="post_number", description="게시글 Post Number")
     title: str = Field(title="title", description="게시글 제목")
     contents: str = Field(title="contents", description="게시글 내용")
-    images: list[str] = Field([], title="images", description="이미지 URL 모음")
+    images: list[bytes] = Field([], title="images", description="이미지 모음")
     created_at: datetime = Field(datetime.now(), title="created_at", description="게시글 작성일")
     updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
     is_deleted: bool = Field(False, title="is_deleted", description="삭제: True, 미삭제: False")
@@ -32,7 +31,7 @@ class RouteResGetContent(BaseModel):
     post_number: int = Field(title="post_number", description="게시글 Post Number")
     title: str = Field(title="title", description="게시글 제목")
     contents: str = Field(title="contents", description="게시글 내용")
-    images: list[str] = Field([], title="images", description="이미지 URL 모음")
+    images: list[str] = Field([], title="images", description="이미지 URL 목록")
     updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
     category: ContentCategory
 
@@ -42,7 +41,7 @@ class RouteResGetContentDetail(BaseModel):
     post_number: int = Field(title="post_number", description="게시글 Post Number")
     title: str = Field(title="title", description="게시글 제목")
     contents: str = Field(title="contents", description="게시글 내용")
-    images: list[str] = Field([], title="images", description="이미지 URL 모음")
+    images_url: list[str] = Field([], title="images_url", description="이미지 URL 모음")
     created_at: datetime = Field(datetime.now(), title="created_at", description="게시글 작성일")
     updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
     is_deleted: bool = Field(False, title="is_deleted", description="삭제: True, 미삭제: False")
@@ -66,4 +65,4 @@ class RouteReqPutContent(BaseModel):
     category: ContentCategory | None = Field(None, description="Content category")
     title: str | None = Field(title="title", description="게시글 제목")
     contents: str | None = Field(title="contents", description="게시글 내용")
-    images: list[str] | None = Field(title="images", description="이미지 URL 모음")
+    images: list[bytes] | None = Field(title="images", description="이미지 모음")

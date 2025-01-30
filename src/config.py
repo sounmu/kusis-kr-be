@@ -27,6 +27,17 @@ class Settings(BaseSettings):
     DB_USER: str = os.getenv("EXP_DB_USER", "root")
     DB_PASSWORD: str = os.getenv("EXP_DB_PASSWORD", "1235")
 
+    # GCS 관련 설정
+    GCS_BUCKET_NAME: str = os.getenv("GCS_BUCKET_NAME", "exp-cdn")
+    GCS_CDN_HOST: str = os.getenv("GCS_CDN_HOST", "exp-cdn.appspot.com")
+    MAX_IMAGE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    ALLOWED_IMAGE_TYPES: set[str] = {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp"
+    }
+
     @property
     def DATABASE_URL(self):
         return f"mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"

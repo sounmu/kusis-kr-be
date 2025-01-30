@@ -1,8 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, status
+from fastapi import APIRouter, Depends, File, Form, Path, Query, UploadFile, status
 
 from database import get_async_firestore_client
+from dependency import get_image_uploader
 from domain.schema.content_schemas import (
     RouteReqPostContent,
     RouteReqPutContent,
@@ -18,6 +19,7 @@ from domain.service.content_services import (
     service_get_content_list,
     service_update_content,
 )
+from utils.image_utils import ImageUploader
 
 router = APIRouter(
     prefix="/content",
@@ -74,18 +76,28 @@ async def get_content_list(
 @router.post(
     "/admin/create",
     summary="게시글 작성",
-    description="""게시글을 작성합니다.""",
+    description="""게시글을 작성합니다. 이미지 파일도 함께 업로드할 수 있습니다.""",
     response_model=RouteResGetContent,
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_content(
-    content: RouteReqPostContent,
-    #current_user: Annotated[dict, Depends(get_current_active_admin)],
+    category: Annotated[str, Form()],
+    title: Annotated[str, Form()],
+    contents: Annotated[str, Form()],
+    image_uploader: Annotated[ImageUploader, Depends(get_image_uploader)],
+    images: list[UploadFile] = File(None),
     db = Depends(get_async_firestore_client),
 ) -> RouteResGetContent:
+    content = RouteReqPostContent(
+        category=category,
+        title=title,
+        contents=contents
+    )
     response = await service_create_content(
         content=content,
+        images=images,
         db=db,
+        image_uploader=image_uploader,
     )
     return response
 

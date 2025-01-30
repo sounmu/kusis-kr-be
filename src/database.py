@@ -2,7 +2,7 @@ import os
 
 import firebase_admin
 from firebase_admin import auth, credentials
-from google.cloud import firestore
+from google.cloud import firestore, storage
 from google.oauth2 import service_account
 
 
@@ -28,3 +28,9 @@ def get_async_firestore_client() -> firestore.AsyncClient:
 
 def get_auth_client():
     return auth.Client(firebase_admin.get_app())
+
+
+async def get_storage() -> storage.Client:
+    """Get Google Cloud Storage client."""
+    initialize_firebase_admin()
+    return storage.Client(firebase_admin.get_app())

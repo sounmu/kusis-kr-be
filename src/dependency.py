@@ -1,13 +1,15 @@
-from typing import Any, Dict
+from typing import Any, Dict, Annotated
 
 from fastapi import Depends, Header, HTTPException, status
 from google.cloud.firestore_v1.async_client import AsyncClient
 from jose import jwt
 from jwt import PyJWTError
+from google.cloud import storage
 
 from config import Settings
-from database import get_async_firestore_client
+from database import get_async_firestore_client, get_storage
 from exception import InactiveUserException
+from utils.image_utils import ImageUploader
 
 
 async def get_current_admin(
@@ -45,3 +47,10 @@ def get_current_active_admin(user: Dict[str, Any]= Depends(get_current_admin)):
     if not user.get("is_active"):
         raise InactiveUserException()
     return user
+
+
+async def get_image_uploader(
+    storage_client: Annotated[storage.Client, Depends(get_storage)]
+) -> ImageUploader:
+    """Get ImageUploader instance with storage client dependency."""
+    return ImageUploader(storage_client)

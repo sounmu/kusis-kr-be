@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, UploadFile, status
 from google.cloud.firestore_v1.async_aggregation import AsyncAggregationQuery
 from google.cloud.firestore_v1.async_client import AsyncClient
 from google.cloud.firestore_v1.base_query import And, FieldFilter
@@ -17,6 +17,7 @@ from domain.schema.content_schemas import (
     RouteResGetContentList,
 )
 from utils.crud_utils import FirestoreService
+from utils.image_utils import ImageUploader
 
 
 async def service_get_content(
@@ -94,10 +95,17 @@ async def service_get_content_list(
 
 async def service_create_content(
     content: RouteReqPostContent,
-    db: Annotated[AsyncClient, Depends(get_async_firestore_client)],
+    images: list[UploadFile],
+    db: AsyncClient,
+    image_uploader: ImageUploader,
 ) -> RouteResGetContent:
     # Get current timestamp in KST
     now = datetime.now(ZoneInfo("Asia/Seoul"))
+
+    # Upload images if provided
+    image_urls = []
+    if images:
+        image_urls = await image_uploader.upload_images(images)
 
     # Prepare content data
     content_data = content.model_dump()
@@ -106,6 +114,7 @@ async def service_create_content(
         "updated_at": now,
         "is_deleted": False,
         "category": content.category,
+        "images": image_urls,  # 업로드된 이미지 URL 목록 저장
     })
 
     # Create document with auto-increment ID
