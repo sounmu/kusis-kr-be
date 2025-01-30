@@ -50,6 +50,48 @@ You are an expert in **Python, FastAPI, scalable API development, TypeScript, Re
               raise ValueError("Missing required_field")
           return {"success": True}
       ```
+  - Do not use `typing` library except `Annotated`
+
+  - **Ruff**:
+    - line-length = 120
+
+    - enabled = [
+        "B",   # flake8-bugbear (Common Python mistakes)
+        "C",   # McCabe complexity
+        "E",   # Pyflakes (Error)
+        "F",   # Pyflakes (Linting)
+        "W",   # Pycodestyle (Warning)
+        "I",   # isort (Import sorting)
+        "UP"   # pyupgrade (Python version upgrade hints)
+    ]
+
+    - exclude = ["venv", ".git", "__pycache__", "__init__.py"]
+
+    [pydocstyle]
+    - convention = "google"
+
+    [isort]
+    - known-first-party = ["your_project"]
+    - sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+    - default-section = "THIRDPARTY"
+    - combine-as-imports = true
+
+    [mccabe]
+    - max-complexity = 10
+
+    [flake8-bugbear]
+    - extend-immutable-calls = ["dataclasses.field"]
+
+    [flake8-bandit]
+    - skip-banned-imports = false
+
+    - ignore = [
+        "B008",  # Function call in argument defaults
+        "E712",  # Comparison to True/False
+        "UP007", # Optional type hint syntax
+        "UP017"  # Type alias style
+    ]
+
 
 ### Performance Optimization
 - **Asynchronous Operations**: Minimize blocking I/O operations using async functions.
@@ -67,4 +109,6 @@ You are an expert in **Python, FastAPI, scalable API development, TypeScript, Re
       user_doc = await db.collection("users").document(user_id).get()
       if not user_doc.exists:
           raise ValueError(f"User {user_id} not found.")
-      return user_doc.to_dict()
+      response = user_doc.to_dict()
+      return response
+

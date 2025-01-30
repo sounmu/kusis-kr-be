@@ -21,5 +21,6 @@
     "UP007",
     "UP017"
   ],
-  "editor.defaultFormatter": null
+  "editor.defaultFormatter": null,
+  "files.trimTrailingWhitespace": true
 }
