@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ContentCategory(str, Enum):
@@ -12,14 +12,28 @@ class ContentCategory(str, Enum):
 
 class RouteReqPostContent(BaseModel):
     category: ContentCategory = Field(description="Content category")
-    title: str = Field(title="title", description="게시글 제목")
-    contents: str = Field(title="contents", description="게시글 내용")
+    title: str = Field(title="title", description="게시글 제목", min_length=1, max_length=200)
+    contents: str = Field(
+        title="contents",
+        description="게시글 내용 (이모지, 특수문자, 개행문자 포함 가능)",
+        min_length=1,
+        max_length=10000
+    )
 
+    @field_validator("contents")
+    @classmethod
+    def validate_contents(cls, value: str | None) -> str:
+        return value.replace('\\n', '\n')
 
 class DomainReqPostContent(BaseModel):
     post_number: int = Field(title="post_number", description="게시글 Post Number")
-    title: str = Field(title="title", description="게시글 제목")
-    contents: str = Field(title="contents", description="게시글 내용")
+    title: str = Field(title="title", description="게시글 제목", min_length=1, max_length=200)
+    contents: str = Field(
+        title="contents",
+        description="게시글 내용 (이모지, 특수문자, 개행문자 포함 가능)",
+        min_length=1,
+        max_length=10000
+    )
     images: list[bytes] = Field([], title="images", description="이미지 모음")
     created_at: datetime = Field(datetime.now(), title="created_at", description="게시글 작성일")
     updated_at: datetime = Field(datetime.now(), title="updated_at", description="게시글 최종 수정일")
@@ -64,5 +78,16 @@ class RouteResGetContentList(BaseModel):
 class RouteReqPutContent(BaseModel):
     category: str | None = Field(description="Content category")
     title: str | None = Field(None, title="title", description="게시글 제목")
-    contents: str | None = Field(None, title="contents", description="게시글 내용")
     images: list[str] | None = Field(None, title="images", description="이미지 URL 모음")
+    contents: str | None = Field(
+        None,
+        title="contents",
+        description="게시글 내용 (이모지, 특수문자, 개행문자 포함 가능)",
+        min_length=1,
+        max_length=10000
+    )
+
+    @field_validator("contents")
+    @classmethod
+    def validate_contents(cls, value: str | None) -> str:
+        return value.replace('\\n', '\n')

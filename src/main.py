@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,7 +23,9 @@ app = FastAPI(
     license_info={
         "name": "MIT",
         "url": "https://opensource.org/licenses/MIT"
-    }
+    },
+    json_encoder=json.JSONEncoder,
+    json_dumps_params={"ensure_ascii": False}
 )
 
 origins = [

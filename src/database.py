@@ -15,7 +15,9 @@ def initialize_firebase_admin():
             raise FileNotFoundError(f"서비스 계정 키 파일을 찾을 수 없습니다: {key_path}")
 
         cred = credentials.Certificate(key_path)
-        firebase_admin.initialize_app(cred)
+        firebase_admin.initialize_app(cred, {
+            'encoding': 'utf-8'
+        })
 
 
 def get_async_firestore_client() -> firestore.AsyncClient:
