@@ -12,8 +12,9 @@ cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.1.8
 cryptography==44.0.0
+dnspython==2.7.0
 ecdsa==0.19.0
-email-validator==2.1.1
+email_validator==2.1.1
 exceptiongroup==1.2.2
 fastapi==0.115.7
 firebase-admin==6.6.0
@@ -36,6 +37,7 @@ idna==3.10
 msgpack==1.1.0
 multidict==6.1.0
 passlib==1.7.4
+pillow==11.1.0
 propcache==0.2.1
 proto-plus==1.25.0
 protobuf==5.29.3
@@ -49,6 +51,7 @@ PyJWT==2.10.1
 pyparsing==3.2.1
 python-dotenv==1.0.1
 python-jose==3.3.0
+python-multipart==0.0.20
 requests==2.32.3
 rsa==4.9
 six==1.17.0
