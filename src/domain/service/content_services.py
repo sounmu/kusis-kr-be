@@ -1,7 +1,7 @@
+import time
 from datetime import datetime
 
 from fastapi import HTTPException, UploadFile, status
-from google.cloud.firestore_v1.async_aggregation import AsyncAggregationQuery
 from google.cloud.firestore_v1.async_client import AsyncClient
 from google.cloud.firestore_v1.base_query import And, FieldFilter
 from zoneinfo import ZoneInfo
@@ -49,19 +49,31 @@ async def service_get_content_list(
     db: AsyncClient,
 ) -> RouteResGetContentList:
     # Calculate offset for pagination
+    start_time = time.time()
     offset = (page - 1) * limit
 
     filters = [FieldFilter("is_deleted", "==", False)]
     if category:
         filters.append(FieldFilter("category", "==", category))
 
+    """query_start1 = time.time()
     total_query = db.collection("contents").where(filter=And(filters))
     aggregate_query = AsyncAggregationQuery(total_query)
     aggregate_query.count(alias="total")
     results = await aggregate_query.get()
-
     total_count = results[0][0].value
+    query_end1 = time.time()
 
+    print(f"Query time: {query_end1 - query_start1} seconds")"""
+
+    query_start2 = time.time()
+    count_query = db.collection("counters").document("contents")
+    count_doc = await count_query.get()
+    total_count = count_doc.to_dict()["count"]
+    query_end2 = time.time()
+    print(f"Query2 time: {query_end2 - query_start2} seconds")
+
+    query_start3 = time.time()
     # Get paginated contents using And filter
     contents_query = (
         db.collection("contents")
@@ -71,7 +83,11 @@ async def service_get_content_list(
         .limit(limit)
     )
     contents = await contents_query.get()
+    query_end3 = time.time()
 
+    print(f"Query3 time: {query_end3 - query_start3} seconds")
+
+    parse_start = time.time()
     content_list = [
         RouteResContentSummary(
             post_number=content_data["post_number"],
@@ -82,12 +98,17 @@ async def service_get_content_list(
         for content in contents
         if (content_data := content.to_dict())
     ]
+    parse_end = time.time()
+
+    print(f"Parse time: {parse_end - parse_start} seconds")
 
     response = RouteResGetContentList(
         data=content_list,
         count=len(content_list),
         total=total_count
     )
+    total_time = time.time() - start_time
+    print(f"Total time: {total_time} seconds")
     return response
 
 
