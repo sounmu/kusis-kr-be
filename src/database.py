@@ -5,41 +5,43 @@ from firebase_admin import auth, credentials
 from google.cloud import firestore, storage
 from google.oauth2 import service_account
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+KEY_PATH = os.path.join(CURRENT_DIR, "kusis-kr-firebase-adminsdk.json")
 
-def initialize_firebase_admin():
-    if not firebase_admin._apps:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        key_path = os.path.join(current_dir, "kusis-kr-firebase-adminsdk.json")
+if not os.path.exists(KEY_PATH):
+    raise FileNotFoundError(f"서비스 계정 키 파일을 찾을 수 없습니다: {KEY_PATH}")
 
-        if not os.path.exists(key_path):
-            raise FileNotFoundError(f"서비스 계정 키 파일을 찾을 수 없습니다: {key_path}")
+GLOBAL_CREDS = service_account.Credentials.from_service_account_file(KEY_PATH)
 
-        cred = credentials.Certificate(key_path)
-        firebase_admin.initialize_app(cred, {
-            'encoding': 'utf-8'
-        })
+if not firebase_admin._apps:
+    cred = credentials.Certificate(KEY_PATH)
+    firebase_admin.initialize_app(cred, {
+        'encoding': 'utf-8'
+    })
+
+_firestore_client = firestore.AsyncClient(credentials=GLOBAL_CREDS)
+_storage_client = storage.Client(
+    credentials=GLOBAL_CREDS,
+    project=GLOBAL_CREDS.project_id
+)
 
 
 def get_async_firestore_client() -> firestore.AsyncClient:
-    initialize_firebase_admin()
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    key_path = os.path.join(current_dir, "kusis-kr-firebase-adminsdk.json")
-    creds = service_account.Credentials.from_service_account_file(key_path)
-    return firestore.AsyncClient(credentials=creds)
+    """
+    애플리케이션 전체에서 재사용 가능한 Firestore Async Client를 반환합니다.
+    """
+    return _firestore_client
 
 
 def get_auth_client():
-    return auth.Client(firebase_admin.get_app())
+    """
+    애플리케이션 전체에서 재사용 가능한 Auth Client를 반환합니다.
+    """
+    return auth
 
 
 async def get_storage() -> storage.Client:
-    """Get Google Cloud Storage client."""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    key_path = os.path.join(current_dir, "kusis-kr-firebase-adminsdk.json")
-    creds = service_account.Credentials.from_service_account_file(key_path)
-
-    # service account key에서 project_id를 가져와서 사용
-    return storage.Client(
-        credentials=creds,
-        project=creds.project_id
-    )
+    """
+    애플리케이션 전체에서 재사용 가능한 Google Cloud Storage Client를 반환합니다.
+    """
+    return _storage_client

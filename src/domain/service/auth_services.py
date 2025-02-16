@@ -1,15 +1,14 @@
 from datetime import datetime
-from typing import Annotated
 
 import aiohttp
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 from firebase_admin import auth
 from firebase_admin.exceptions import FirebaseError
 from google.cloud.firestore_v1.async_client import AsyncClient
 from zoneinfo import ZoneInfo
 
 from config import settings
-from database import get_async_firestore_client, get_auth_client
+from database import get_auth_client
 from domain.schema.auth_schemas import (
     RouteReqUpdateUser,
     RouteResGetUser,
